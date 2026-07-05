@@ -576,25 +576,7 @@ const CampaignScreen = ({
 
     const campaignRef = doc(db, 'campaigns', code);
 
-    try {
-      console.log('Checking if campaign exists...');
-      const snapshot = await getDoc(campaignRef);
-      if (snapshot.exists()) {
-        console.log('Campaign already exists');
-        Alert.alert('Campaign Exists', `Campaign "${code}" already exists. Join it instead or choose a different ID.`);
-        return;
-      }
-    } catch (e) {
-      if (e.message && e.message.includes('offline')) {
-        console.log('Offline during existence check - attempting to create anyway');
-      } else {
-        console.error('Unexpected error during existence check:', e);
-        Alert.alert('Error', 'Failed to check campaign. Check your connection.');
-        return;
-      }
-    }
-
-    console.log('Creating new campaign document...');
+    console.log('Creating/updating campaign document...');
     try {
       await setDoc(campaignRef, {
         players: [],
@@ -603,7 +585,7 @@ const CampaignScreen = ({
         orderMode: 'sorted',
         createdAt: serverTimestamp(),
         isLocked: false
-      });
+      }, { merge: true });
 
       setCampaignId(code);
       setIsConnectedToCampaign(true);
