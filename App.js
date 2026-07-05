@@ -3,7 +3,7 @@ import { View, Text, Button, FlatList, TextInput, StyleSheet, TouchableOpacity, 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, serverTimestamp, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, serverTimestamp, getDoc, enableNetwork } from 'firebase/firestore';
 
 let app;
 let db = null;
@@ -22,6 +22,7 @@ if (firebaseConfig.apiKey) {
   try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    enableNetwork(db).catch(e => console.warn('Could not enable network:', e));
     console.log('Firebase initialized successfully');
   } catch (e) {
     console.error('Firebase initialization failed:', e);
@@ -601,7 +602,11 @@ const CampaignScreen = ({
       console.log('Campaign created successfully:', code);
     } catch (error) {
       console.error('Error creating campaign:', error);
-      Alert.alert('Error', 'Failed to create campaign. Check console for details and your Firebase setup.');
+      if (error.message && error.message.includes('BLOCKED_BY_CLIENT')) {
+        Alert.alert('Connection Blocked', 'Your browser (Brave Shields or an ad blocker) is blocking Firebase. Disable Shields for this site and try again.');
+      } else {
+        Alert.alert('Error', 'Failed to create campaign. Check your Firebase setup and console for details.');
+      }
     }
   };
 
