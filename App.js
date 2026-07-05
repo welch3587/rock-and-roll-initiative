@@ -2,6 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Button, FlatList, TextInput, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore';
+import firebaseConfig from './firebaseConfig';
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const diceOptions = ['d4', 'd6', 'd8', 'd10', 'd12', 'd14', 'd16', 'd20', 'd100'];
 
@@ -14,7 +20,9 @@ const RockAndRollInitiative = () => {
   const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
   const [orderMode, setOrderMode] = useState('sorted'); // 'sorted' or 'cyclic'
   const [sessionNotes, setSessionNotes] = useState('');
-  const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'help', 'setup', 'tracker'
+  const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'help', 'setup', 'tracker', 'campaign'
+  const [campaignId, setCampaignId] = useState(null);
+  const [isConnectedToCampaign, setIsConnectedToCampaign] = useState(false);
 
   const loadData = async () => {
     try {
@@ -258,6 +266,15 @@ const RockAndRollInitiative = () => {
           diceOptions={diceOptions}
         />
       )}
+      {currentScreen === 'campaign' && (
+        <CampaignScreen
+          styles={styles}
+          campaignId={campaignId}
+          setCampaignId={setCampaignId}
+          isConnectedToCampaign={isConnectedToCampaign}
+          setIsConnectedToCampaign={setIsConnectedToCampaign}
+        />
+      )}
       <TabBar currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} styles={styles} />
     </View>
   );
@@ -452,13 +469,88 @@ const TrackerScreen = ({
   </View>
 );
 
+const CampaignScreen = ({
+  styles,
+  campaignId,
+  setCampaignId,
+  isConnectedToCampaign,
+  setIsConnectedToCampaign
+}) => {
+  const [joinCode, setJoinCode] = useState('');
+
+  const generateCampaignCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'ROCK';
+    for (let i = 0; i < 4; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return code;
+  };
+
+  const createCampaign = () => {
+    const code = generateCampaignCode();
+    setCampaignId(code);
+    setIsConnectedToCampaign(true);
+    Alert.alert('Campaign Created', `Share this code with your band:\n\n${code}\n\n(Real-time sync with Firebase coming next)`);
+  };
+
+  const joinCampaign = () => {
+    if (!joinCode.trim()) {
+      Alert.alert('Error', 'Please enter a campaign code');
+      return;
+    }
+    const code = joinCode.toUpperCase().trim();
+    setCampaignId(code);
+    setIsConnectedToCampaign(true);
+    Alert.alert('Joined Campaign', `Connected to ${code}\n\n(Real-time sync with Firebase coming next)`);
+    setJoinCode('');
+  };
+
+  const leaveCampaign = () => {
+    setCampaignId(null);
+    setIsConnectedToCampaign(false);
+    Alert.alert('Left Campaign', 'Back to local mode');
+  };
+
+  return (
+    <View style={styles.screenContainer}>
+      <Text style={styles.sectionTitle}>Multiplayer Campaign</Text>
+      
+      {isConnectedToCampaign && campaignId ? (
+        <View>
+          <Text style={styles.label}>Current Campaign Code: {campaignId}</Text>
+          <Text style={styles.helpText}>Everyone in this campaign sees the same player list, rolls, and notes in real-time.</Text>
+          <Button title="Leave Campaign" onPress={leaveCampaign} color="#990000" />
+        </View>
+      ) : (
+        <View>
+          <Button title="Create New Campaign" onPress={createCampaign} color="#ffcc00" />
+          <Text style={styles.label}>Or join an existing campaign</Text>
+          <TextInput 
+            placeholder="Enter campaign code (e.g. ROCKX7K2)" 
+            value={joinCode} 
+            onChangeText={setJoinCode} 
+            style={styles.input} 
+            autoCapitalize="characters"
+            autoCorrect={false}
+          />
+          <Button title="Join Campaign" onPress={joinCampaign} />
+        </View>
+      )}
+      
+      <Text style={styles.helpText}>Note: This is a simulation for now. The next update will connect it to Firebase for true real-time sync across devices.</Text>
+    </View>
+  );
+};
+
 const TabBar = ({ currentScreen, setCurrentScreen, styles }) => (
   <View style={styles.tabBar}>
     {[
       { key: 'home', label: '🏠 Home', icon: '🏠' },
       { key: 'help', label: '❔ Help', icon: '❔' },
       { key: 'setup', label: '🎤 Setup', icon: '🎤' },
-      { key: 'tracker', label: '🎲 Track', icon: '🎲' }
+      { key: 'tracker', label: '🎲 Track', icon: '🎲' },
+      { key: 'campaign', label: '🌐 Campaign', icon: '🌐' }
     ].map(tab => (
       <TouchableOpacity 
         key={tab.key}
