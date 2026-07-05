@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Rock & Roll Initiative",
+    "slug": "rock-and-roll-initiative",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.rockandroll.initiative"
+    },
+    "description": "A rockin' D&D initiative tracker with haptics, dice variety, turn order, and jam breaks. Built with Expo.",
+    "githubUrl": "https://github.com/welch3587/rock-and-roll-initiative"
+  },
+  "web": {
+    "favicon": "./assets/favicon.png",
+    "bundler": "metro",
+    "output": "static",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a0033"
+    }
+  }
+}
