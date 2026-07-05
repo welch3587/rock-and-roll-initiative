@@ -38,9 +38,23 @@ The app runs great in the browser and can be installed to the home screen like a
 The site will be a full PWA with offline support.
 
 **Firebase Setup (for the Campaign / Multiplayer tab):**
-1. Follow the Firebase console steps in the project README or Issue #2.
-2. Copy `firebaseConfig.template.js` to `firebaseConfig.js` (gitignored) and paste your real config.
-3. The Campaign tab will then enable real-time sync across devices.
+
+**For Vercel (recommended for the deployed web version):**
+1. In your Vercel dashboard for this project, go to **Settings → Environment Variables**.
+2. Add the following 6 variables (use the values from your Firebase console):
+   - `FIREBASE_API_KEY`
+   - `FIREBASE_AUTH_DOMAIN`
+   - `FIREBASE_PROJECT_ID`
+   - `FIREBASE_STORAGE_BUCKET`
+   - `FIREBASE_MESSAGING_SENDER_ID`
+   - `FIREBASE_APP_ID`
+3. Redeploy. The app will use these at runtime.
+
+**For local development:**
+1. Copy `firebaseConfig.template.js` to `firebaseConfig.js` (gitignored) and paste your real config from the Firebase console.
+2. The Campaign tab will then enable real-time sync across devices.
+
+See Issue #2 for the full feature.
 
 ### 2. Standalone Mobile App (Native APK/IPA – no Expo Go needed)
 ```bash
