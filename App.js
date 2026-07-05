@@ -89,6 +89,49 @@ const RockAndRollInitiative = () => {
     AsyncStorage.setItem('orderMode', orderMode).catch(() => {});
   }, [selectedDie, orderMode]);
 
+  // Real-time Firebase sync for campaign (bi-directional)
+  useEffect(() => {
+    if (!campaignId || !db || !isConnectedToCampaign) return;
+
+    const campaignRef = doc(db, 'campaigns', campaignId);
+
+    const unsubscribe = onSnapshot(campaignRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data.players) setPlayers(data.players);
+        if (data.sessionNotes !== undefined) setSessionNotes(data.sessionNotes);
+        if (data.currentTurnIndex !== undefined) setCurrentTurnIndex(data.currentTurnIndex);
+        if (data.orderMode) setOrderMode(data.orderMode);
+      } else {
+        // Create initial document if it doesn't exist
+        setDoc(campaignRef, {
+          players: [],
+          sessionNotes: sessionNotes || '',
+          currentTurnIndex: 0,
+          orderMode: orderMode || 'sorted',
+          createdAt: serverTimestamp()
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [campaignId, db, isConnectedToCampaign]);
+
+  // Save local changes to Firebase when in a campaign
+  useEffect(() => {
+    if (!campaignId || !db || !isConnectedToCampaign) return;
+
+    const campaignRef = doc(db, 'campaigns', campaignId);
+
+    setDoc(campaignRef, {
+      players,
+      sessionNotes,
+      currentTurnIndex,
+      orderMode,
+      updatedAt: serverTimestamp()
+    }, { merge: true }).catch(console.error);
+  }, [players, sessionNotes, currentTurnIndex, orderMode, campaignId, db, isConnectedToCampaign]);
+
   const rollDice = (faces) => {
     return Math.floor(Math.random() * faces) + 1;
   };
