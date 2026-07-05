@@ -4,10 +4,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore';
-import firebaseConfig from './firebaseConfig';
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+let app;
+let db = null;
+try {
+  // firebaseConfig.js is gitignored - copy firebaseConfig.template.js to firebaseConfig.js and fill in your values
+  const config = require('./firebaseConfig').default || require('./firebaseConfig');
+  app = initializeApp(config);
+  db = getFirestore(app);
+  console.log('Firebase initialized successfully');
+} catch (e) {
+  console.log('Firebase config not found - running in local-only mode. Copy firebaseConfig.template.js to firebaseConfig.js');
+}
 
 const diceOptions = ['d4', 'd6', 'd8', 'd10', 'd12', 'd14', 'd16', 'd20', 'd100'];
 

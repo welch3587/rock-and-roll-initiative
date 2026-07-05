@@ -28,14 +28,19 @@ npx expo start --clear
 The app runs great in the browser and can be installed to the home screen like a native app.
 
 **One-click hosting with Vercel (free, works with private or public repos):**
-1. Push this code to your GitHub repo (already done).
+1. Push this code to your GitHub repo.
 2. Go to [vercel.com/new](https://vercel.com/new), import the repo.
-3. Vercel will auto-detect the Expo web build.
-4. (Optional) In Vercel dashboard, add environment variable `GITHUB_TOKEN` if needed for future features.
-
-Alternatively, use Netlify or `npx expo export -p web` and host the `dist` folder anywhere.
+3. Select **"Other"** as the framework preset.
+4. Build Command: `npm run build`
+5. Output Directory: `dist`
+6. Deploy.
 
 The site will be a full PWA with offline support.
+
+**Firebase Setup (for the Campaign / Multiplayer tab):**
+1. Follow the Firebase console steps in the project README or Issue #2.
+2. Copy `firebaseConfig.template.js` to `firebaseConfig.js` (gitignored) and paste your real config.
+3. The Campaign tab will then enable real-time sync across devices.
 
 ### 2. Standalone Mobile App (Native APK/IPA – no Expo Go needed)
 ```bash
