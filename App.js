@@ -616,7 +616,6 @@ const CampaignScreen = ({
     } else {
       Alert.alert('Error', 'Failed to create campaign. Check your Firebase setup and console for details.');
     }
-  }
   };
 
   const joinCampaign = () => {
