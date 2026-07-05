@@ -222,207 +222,255 @@ const RockAndRollInitiative = () => {
     );
   };
 
-  // Screen Components
-  const HomeScreen = () => (
-    <View style={styles.homeContainer}>
-      <Text style={styles.doorEmoji}>🪨🚪🎸</Text>
-      <Text style={styles.welcomeTitle}>Welcome to the Tavern</Text>
-      <Text style={styles.welcomeText}>
-        The band is ready. The crowd is rowdy.{'\n\n'}
-        Tap the tabs below to:{'\n'}
-        • View Help{'\n'}
-        • Setup your Band & Notes{'\n'}
-        • Roll Initiative and track turns
-      </Text>
-      <Text style={styles.welcomeSub}>Rock on — may your rolls be high and your jams legendary! 🎲🍺</Text>
-    </View>
-  );
-
-  const HelpScreen = () => (
-    <View style={styles.screenContainer}>
-      <Text style={styles.sectionTitle}>How to Rock the Initiative</Text>
-      <Text style={styles.helpText}>
-        • Add band members with name and modifier in Setup.{'\n'}
-        • Use "New Gig" to clear between groups.{'\n'}
-        • In Tracker: Roll individual or all. Natural 20/1 trigger special events!{'\n'}
-        • Current turn is highlighted in gold.{'\n'}
-        • Jam Break for random chaos anytime.{'\n'}
-        • Everything auto-saves. Use Session Notes for your campaign lore.{'\n\n'}
-        Built for fast D&D / DCC sessions with rock & roll soul.
-      </Text>
-      <Text style={styles.helpFooter}>Shake phone or use dev menu for reload. Enjoy the gig!</Text>
-    </View>
-  );
-
-  const SetupScreen = () => (
-    <View style={styles.screenContainer}>
-      <Text style={styles.sectionTitle}>Band Setup</Text>
-      
-      <View style={styles.addSection}>
-        <Text style={styles.label}>Character / Band Member Name</Text>
-        <TextInput 
-          placeholder="e.g. Thunderaxe the Bard" 
-          placeholderTextColor="#888"
-          value={newPlayerName} 
-          onChangeText={setNewPlayerName} 
-          style={styles.input} 
-        />
-        <Text style={styles.label}>Initiative Modifier (+/-)</Text>
-        <TextInput 
-          placeholder="0" 
-          placeholderTextColor="#888"
-          value={newPlayerMod} 
-          onChangeText={setNewPlayerMod} 
-          keyboardType="numeric" 
-          style={styles.input} 
-        />
-        <Button title="Add to Band" onPress={addPlayer} color="#ffcc00" />
-      </View>
-
-      <Text style={styles.sectionTitle}>Current Band ({players.length})</Text>
-      {players.length === 0 ? (
-        <Text style={styles.emptyState}>No members yet. Add some above!</Text>
-      ) : (
-        <FlatList
-          data={players}
-          renderItem={({item, index}) => (
-            <View style={styles.playerRow}>
-              <View style={styles.playerInfo}>
-                <Text style={styles.playerName}>{item.name} (Mod: {item.mod})</Text>
-              </View>
-              <View style={styles.playerActions}>
-                <TouchableOpacity style={styles.deleteBtn} onPress={() => deletePlayer(index)}>
-                  <Text style={styles.btnText}>Remove</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-          keyExtractor={(item, idx) => idx.toString()}
-        />
-      )}
-
-      <Button title="New Gig (Clear Players)" onPress={newGig} color="#666" />
-
-      <Text style={styles.sectionTitle}>Session Notes</Text>
-      <TextInput 
-        placeholder="Campaign notes, funny moments, setlist..." 
-        value={sessionNotes} 
-        onChangeText={setSessionNotes} 
-        multiline 
-        style={styles.notesInput} 
-      />
-    </View>
-  );
-
-  const TrackerScreen = () => (
-    <View style={styles.screenContainer}>
-      <Text style={styles.sectionTitle}>Initiative Tracker — {orderMode.toUpperCase()} Mode</Text>
-      
-      <View style={styles.diceSelect}>
-        <Text style={styles.label}>Die: </Text>
-        {diceOptions.map(d => (
-          <TouchableOpacity 
-            key={d} 
-            onPress={() => setSelectedDie(d)} 
-            style={[styles.dieBtn, selectedDie === d && styles.selected]}
-          >
-            <Text style={styles.dieText}>{d}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.modeToggle}>
-        <Button 
-          title={orderMode === 'sorted' ? '🔄 Cyclic' : '📋 Sorted'} 
-          onPress={() => setOrderMode(orderMode === 'sorted' ? 'cyclic' : 'sorted')} 
-        />
-        <Button title="Reset Rolls" onPress={resetInitiative} color="#666" />
-      </View>
-
-      <Text style={styles.sectionTitle}>Band (sorted by roll)</Text>
-      {players.length === 0 ? (
-        <Text style={styles.emptyState}>Add band members in Setup tab first!</Text>
-      ) : (
-        <FlatList
-          data={players}
-          renderItem={({item, index}) => {
-            const isCurrent = index === currentTurnIndex;
-            return (
-              <View style={[styles.playerRow, isCurrent && styles.currentTurn]}>
-                <View style={styles.playerInfo}>
-                  <Text style={[styles.playerName, isCurrent && styles.currentTurnText]}>
-                    {item.name}
-                  </Text>
-                  <Text style={styles.rollText}>
-                    Mod: {item.mod} • Roll: {item.roll !== null && item.roll !== undefined ? item.roll : '—'}
-                  </Text>
-                </View>
-                <TouchableOpacity style={styles.rollBtn} onPress={() => rollInitiative(index)}>
-                  <Text style={styles.btnText}>Roll</Text>
-                </TouchableOpacity>
-              </View>
-            );
-          }}
-          keyExtractor={(item, idx) => idx.toString()}
-          extraData={[rolls, currentTurnIndex, orderMode, selectedDie]}
-        />
-      )}
-
-      <View style={styles.controls}>
-        <Button title="🎲 Roll All" onPress={() => rollInitiative()} color="#ff6600" />
-        <Button title="➡️ Next Turn" onPress={nextTurn} disabled={players.length === 0} />
-        <Button title="🎸 Jam Break!" onPress={jamBreak} color="#ffcc00" />
-      </View>
-
-      <Text style={styles.sectionTitle}>Recent Activity</Text>
-      <View style={styles.history}>
-        {rolls.length > 0 ? rolls.slice(0, 5).map((r, i) => (
-          <Text key={i} style={styles.historyText}>
-            {r.player}: {r.die} = {r.total}
-          </Text>
-        )) : <Text style={styles.historyText}>Roll some dice to see action here...</Text>}
-      </View>
-    </View>
-  );
-
-  // Bottom Tab Bar
-  const TabBar = () => (
-    <View style={styles.tabBar}>
-      {[
-        { key: 'home', label: '🏠 Home', icon: '🏠' },
-        { key: 'help', label: '❔ Help', icon: '❔' },
-        { key: 'setup', label: '🎤 Setup', icon: '🎤' },
-        { key: 'tracker', label: '🎲 Track', icon: '🎲' }
-      ].map(tab => (
-        <TouchableOpacity 
-          key={tab.key}
-          style={[styles.tabItem, currentScreen === tab.key && styles.activeTab]}
-          onPress={() => setCurrentScreen(tab.key)}
-        >
-          <Text style={styles.tabIcon}>{tab.icon}</Text>
-          <Text style={styles.tabLabel}>{tab.label.split(' ')[1]}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
-  const renderScreen = () => {
-    switch (currentScreen) {
-      case 'home': return <HomeScreen />;
-      case 'help': return <HelpScreen />;
-      case 'setup': return <SetupScreen />;
-      case 'tracker': return <TrackerScreen />;
-      default: return <HomeScreen />;
-    }
-  };
-
   return (
     <View style={styles.container}>
-      {renderScreen()}
-      <TabBar />
+      {currentScreen === 'home' && <HomeScreen styles={styles} />}
+      {currentScreen === 'help' && <HelpScreen styles={styles} />}
+      {currentScreen === 'setup' && (
+        <SetupScreen
+          styles={styles}
+          newPlayerName={newPlayerName}
+          setNewPlayerName={setNewPlayerName}
+          newPlayerMod={newPlayerMod}
+          setNewPlayerMod={setNewPlayerMod}
+          addPlayer={addPlayer}
+          players={players}
+          deletePlayer={deletePlayer}
+          newGig={newGig}
+          sessionNotes={sessionNotes}
+          setSessionNotes={setSessionNotes}
+        />
+      )}
+      {currentScreen === 'tracker' && (
+        <TrackerScreen
+          styles={styles}
+          orderMode={orderMode}
+          setOrderMode={setOrderMode}
+          selectedDie={selectedDie}
+          setSelectedDie={setSelectedDie}
+          players={players}
+          currentTurnIndex={currentTurnIndex}
+          rollInitiative={rollInitiative}
+          nextTurn={nextTurn}
+          resetInitiative={resetInitiative}
+          jamBreak={jamBreak}
+          rolls={rolls}
+          diceOptions={diceOptions}
+        />
+      )}
+      <TabBar currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} styles={styles} />
     </View>
   );
 };
+
+// Stable screen components (defined outside to prevent remounting on every render — fixes input focus loss)
+const HomeScreen = ({ styles }) => (
+  <View style={styles.homeContainer}>
+    <Text style={styles.doorEmoji}>🪨🚪🎸</Text>
+    <Text style={styles.welcomeTitle}>Welcome to the Tavern</Text>
+    <Text style={styles.welcomeText}>
+      The band is ready. The crowd is rowdy.{'\n\n'}
+      Tap the tabs below to:{'\n'}
+      • View Help{'\n'}
+      • Setup your Band & Notes{'\n'}
+      • Roll Initiative and track turns
+    </Text>
+    <Text style={styles.welcomeSub}>Rock on — may your rolls be high and your jams legendary! 🎲🍺</Text>
+  </View>
+);
+
+const HelpScreen = ({ styles }) => (
+  <View style={styles.screenContainer}>
+    <Text style={styles.sectionTitle}>How to Rock the Initiative</Text>
+    <Text style={styles.helpText}>
+      • Add band members with name and modifier in Setup.{'\n'}
+      • Use "New Gig" to clear between groups.{'\n'}
+      • In Tracker: Roll individual or all. Natural 20/1 trigger special events!{'\n'}
+      • Current turn is highlighted in gold.{'\n'}
+      • Jam Break for random chaos anytime.{'\n'}
+      • Everything auto-saves. Use Session Notes for your campaign lore.{'\n\n'}
+      Built for fast D&D / DCC sessions with rock & roll soul.
+    </Text>
+    <Text style={styles.helpFooter}>Shake phone or use dev menu for reload. Enjoy the gig!</Text>
+  </View>
+);
+
+const SetupScreen = ({
+  styles,
+  newPlayerName,
+  setNewPlayerName,
+  newPlayerMod,
+  setNewPlayerMod,
+  addPlayer,
+  players,
+  deletePlayer,
+  newGig,
+  sessionNotes,
+  setSessionNotes
+}) => (
+  <View style={styles.screenContainer}>
+    <Text style={styles.sectionTitle}>Band Setup</Text>
+    
+    <View style={styles.addSection}>
+      <Text style={styles.label}>Character / Band Member Name</Text>
+      <TextInput 
+        placeholder="e.g. Thunderaxe the Bard" 
+        placeholderTextColor="#888"
+        value={newPlayerName} 
+        onChangeText={setNewPlayerName} 
+        style={styles.input} 
+      />
+      <Text style={styles.label}>Initiative Modifier (+/-)</Text>
+      <TextInput 
+        placeholder="0" 
+        placeholderTextColor="#888"
+        value={newPlayerMod} 
+        onChangeText={setNewPlayerMod} 
+        keyboardType="numeric" 
+        style={styles.input} 
+      />
+      <Button title="Add to Band" onPress={addPlayer} color="#ffcc00" />
+    </View>
+
+    <Text style={styles.sectionTitle}>Current Band ({players.length})</Text>
+    {players.length === 0 ? (
+      <Text style={styles.emptyState}>No members yet. Add some above!</Text>
+    ) : (
+      <FlatList
+        data={players}
+        renderItem={({item, index}) => (
+          <View style={styles.playerRow}>
+            <View style={styles.playerInfo}>
+              <Text style={styles.playerName}>{item.name} (Mod: {item.mod})</Text>
+            </View>
+            <View style={styles.playerActions}>
+              <TouchableOpacity style={styles.deleteBtn} onPress={() => deletePlayer(index)}>
+                <Text style={styles.btnText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+        keyExtractor={(item, idx) => idx.toString()}
+      />
+    )}
+
+    <Button title="New Gig (Clear Players)" onPress={newGig} color="#666" />
+
+    <Text style={styles.sectionTitle}>Session Notes</Text>
+    <TextInput 
+      placeholder="Campaign notes, funny moments, setlist..." 
+      value={sessionNotes} 
+      onChangeText={setSessionNotes} 
+      multiline 
+      style={styles.notesInput} 
+    />
+  </View>
+);
+
+const TrackerScreen = ({
+  styles,
+  orderMode,
+  setOrderMode,
+  selectedDie,
+  setSelectedDie,
+  players,
+  currentTurnIndex,
+  rollInitiative,
+  nextTurn,
+  resetInitiative,
+  jamBreak,
+  rolls,
+  diceOptions
+}) => (
+  <View style={styles.screenContainer}>
+    <Text style={styles.sectionTitle}>Initiative Tracker — {orderMode.toUpperCase()} Mode</Text>
+    
+    <View style={styles.diceSelect}>
+      <Text style={styles.label}>Die: </Text>
+      {diceOptions.map(d => (
+        <TouchableOpacity 
+          key={d} 
+          onPress={() => setSelectedDie(d)} 
+          style={[styles.dieBtn, selectedDie === d && styles.selected]}
+        >
+          <Text style={styles.dieText}>{d}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+
+    <View style={styles.modeToggle}>
+      <Button 
+        title={orderMode === 'sorted' ? '🔄 Cyclic' : '📋 Sorted'} 
+        onPress={() => setOrderMode(orderMode === 'sorted' ? 'cyclic' : 'sorted')} 
+      />
+      <Button title="Reset Rolls" onPress={resetInitiative} color="#666" />
+    </View>
+
+    <Text style={styles.sectionTitle}>Band (sorted by roll)</Text>
+    {players.length === 0 ? (
+      <Text style={styles.emptyState}>Add band members in Setup tab first!</Text>
+    ) : (
+      <FlatList
+        data={players}
+        renderItem={({item, index}) => {
+          const isCurrent = index === currentTurnIndex;
+          return (
+            <View style={[styles.playerRow, isCurrent && styles.currentTurn]}>
+              <View style={styles.playerInfo}>
+                <Text style={[styles.playerName, isCurrent && styles.currentTurnText]}>
+                  {item.name}
+                </Text>
+                <Text style={styles.rollText}>
+                  Mod: {item.mod} • Roll: {item.roll !== null && item.roll !== undefined ? item.roll : '—'}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.rollBtn} onPress={() => rollInitiative(index)}>
+                <Text style={styles.btnText}>Roll</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        }}
+        keyExtractor={(item, idx) => idx.toString()}
+        extraData={[currentTurnIndex, orderMode, selectedDie]}
+      />
+    )}
+
+    <View style={styles.controls}>
+      <Button title="🎲 Roll All" onPress={() => rollInitiative()} color="#ff6600" />
+      <Button title="➡️ Next Turn" onPress={nextTurn} disabled={players.length === 0} />
+      <Button title="🎸 Jam Break!" onPress={jamBreak} color="#ffcc00" />
+    </View>
+
+    <Text style={styles.sectionTitle}>Recent Activity</Text>
+    <View style={styles.history}>
+      {rolls.length > 0 ? rolls.slice(0, 5).map((r, i) => (
+        <Text key={i} style={styles.historyText}>
+          {r.player}: {r.die} = {r.total}
+        </Text>
+      )) : <Text style={styles.historyText}>Roll some dice to see action here...</Text>}
+    </View>
+  </View>
+);
+
+const TabBar = ({ currentScreen, setCurrentScreen, styles }) => (
+  <View style={styles.tabBar}>
+    {[
+      { key: 'home', label: '🏠 Home', icon: '🏠' },
+      { key: 'help', label: '❔ Help', icon: '❔' },
+      { key: 'setup', label: '🎤 Setup', icon: '🎤' },
+      { key: 'tracker', label: '🎲 Track', icon: '🎲' }
+    ].map(tab => (
+      <TouchableOpacity 
+        key={tab.key}
+        style={[styles.tabItem, currentScreen === tab.key && styles.activeTab]}
+        onPress={() => setCurrentScreen(tab.key)}
+      >
+        <Text style={styles.tabIcon}>{tab.icon}</Text>
+        <Text style={styles.tabLabel}>{tab.label.split(' ')[1]}</Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: { 
