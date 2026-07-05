@@ -545,25 +545,33 @@ const CampaignScreen = ({
 
   const createCampaign = async () => {
     const code = campaignCode.trim().toUpperCase();
+    console.log('Create Campaign pressed with code:', code);
+    console.log('db available:', !!db);
+    console.log('isConnectedToCampaign:', isConnectedToCampaign);
+
     if (!code) {
       Alert.alert('Error', 'Please enter a campaign code');
       return;
     }
 
     if (!db) {
-      Alert.alert('Error', 'Firebase not configured');
+      Alert.alert('Error', 'Firebase not configured - check firebaseConfig.js and Firestore setup');
+      console.error('Firebase db is null - config not loaded');
       return;
     }
 
     const campaignRef = doc(db, 'campaigns', code);
 
     try {
+      console.log('Checking if campaign exists...');
       const snapshot = await getDoc(campaignRef);
       if (snapshot.exists()) {
+        console.log('Campaign already exists');
         Alert.alert('Campaign Exists', `Campaign "${code}" already exists. Join it instead or choose a different ID.`);
         return;
       }
 
+      console.log('Creating new campaign document...');
       await setDoc(campaignRef, {
         players: [],
         sessionNotes: '',
@@ -576,10 +584,11 @@ const CampaignScreen = ({
       setCampaignId(code);
       setIsConnectedToCampaign(true);
       setCampaignCode('');
-      Alert.alert('Campaign Created', `Share this code with your band:\n\n${code}`);
+      Alert.alert('Campaign Created', `Share this code with your band:\n\n${code}\n\nReal-time sync is now active.`);
+      console.log('Campaign created successfully:', code);
     } catch (error) {
-      Alert.alert('Error', 'Failed to create campaign. Check your connection.');
-      console.error(error);
+      console.error('Error creating campaign:', error);
+      Alert.alert('Error', 'Failed to create campaign. Check console for details and your Firebase setup.');
     }
   };
 
