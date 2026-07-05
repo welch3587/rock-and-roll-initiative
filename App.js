@@ -272,6 +272,8 @@ const RockAndRollInitiative = () => {
           jamBreak={jamBreak}
           rolls={rolls}
           diceOptions={diceOptions}
+          campaignId={campaignId}
+          isConnectedToCampaign={isConnectedToCampaign}
         />
       )}
       {currentScreen === 'campaign' && (
@@ -331,10 +333,15 @@ const SetupScreen = ({
   deletePlayer,
   newGig,
   sessionNotes,
-  setSessionNotes
+  setSessionNotes,
+  campaignId,
+  isConnectedToCampaign
 }) => (
   <View style={styles.screenContainer}>
     <Text style={styles.sectionTitle}>Band Setup</Text>
+    {isConnectedToCampaign && campaignId && (
+      <Text style={styles.campaignBadge}>🌐 {campaignId} (Live)</Text>
+    )}
     
     <View style={styles.addSection}>
       <Text style={styles.label}>Character / Band Member Name</Text>
@@ -405,10 +412,15 @@ const TrackerScreen = ({
   resetInitiative,
   jamBreak,
   rolls,
-  diceOptions
+  diceOptions,
+  campaignId,
+  isConnectedToCampaign
 }) => (
   <View style={styles.screenContainer}>
     <Text style={styles.sectionTitle}>Initiative Tracker — {orderMode.toUpperCase()} Mode</Text>
+    {isConnectedToCampaign && campaignId && (
+      <Text style={styles.campaignBadge}>🌐 {campaignId} (Live)</Text>
+    )}
     
     <View style={styles.diceSelect}>
       <Text style={styles.label}>Die: </Text>
@@ -710,6 +722,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#220044',
     borderRadius: 8,
     marginBottom: 15 
+  },
+  campaignBadge: { 
+    color: '#00ff88', 
+    fontSize: 14, 
+    fontWeight: 'bold', 
+    textAlign: 'right', 
+    marginBottom: 10,
+    backgroundColor: '#003300',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-end'
   },
   history: { 
     backgroundColor: '#110022', 
