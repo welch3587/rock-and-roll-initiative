@@ -588,33 +588,37 @@ const CampaignScreen = ({
       if (e.message && e.message.includes('offline')) {
         console.log('Offline during existence check - attempting to create anyway');
       } else {
-        throw e;
+        console.error('Unexpected error during existence check:', e);
+        Alert.alert('Error', 'Failed to check campaign. Check your connection.');
+        return;
       }
     }
 
     console.log('Creating new campaign document...');
-    await setDoc(campaignRef, {
-      players: [],
-      sessionNotes: '',
-      currentTurnIndex: 0,
-      orderMode: 'sorted',
-      createdAt: serverTimestamp(),
-      isLocked: false
-    });
+    try {
+      await setDoc(campaignRef, {
+        players: [],
+        sessionNotes: '',
+        currentTurnIndex: 0,
+        orderMode: 'sorted',
+        createdAt: serverTimestamp(),
+        isLocked: false
+      });
 
-    setCampaignId(code);
-    setIsConnectedToCampaign(true);
-    setCampaignCode('');
-    Alert.alert('Campaign Created', `Share this code with your band:\n\n${code}\n\nReal-time sync is now active.`);
-    console.log('Campaign created successfully:', code);
-  } catch (error) {
-    console.error('Error creating campaign:', error);
-    if (error.message && error.message.includes('BLOCKED_BY_CLIENT')) {
-      Alert.alert('Connection Blocked', 'Your browser (Brave Shields or an ad blocker) is blocking Firebase. Disable Shields for this site and try again.');
-    } else if (error.message && error.message.includes('offline')) {
-      Alert.alert('Offline', 'Could not connect to Firebase. Check your internet connection and try again.');
-    } else {
-      Alert.alert('Error', 'Failed to create campaign. Check your Firebase setup and console for details.');
+      setCampaignId(code);
+      setIsConnectedToCampaign(true);
+      setCampaignCode('');
+      Alert.alert('Campaign Created', `Share this code with your band:\n\n${code}\n\nReal-time sync is now active.`);
+      console.log('Campaign created successfully:', code);
+    } catch (error) {
+      console.error('Error creating campaign:', error);
+      if (error.message && error.message.includes('BLOCKED_BY_CLIENT')) {
+        Alert.alert('Connection Blocked', 'Your browser (Brave Shields or an ad blocker) is blocking Firebase. Disable Shields for this site and try again.');
+      } else if (error.message && error.message.includes('offline')) {
+        Alert.alert('Offline', 'Could not connect to Firebase. Check your internet connection and try again.');
+      } else {
+        Alert.alert('Error', 'Failed to create campaign. Check your Firebase setup and console for details.');
+      }
     }
   };
 
