@@ -3,7 +3,7 @@ import { View, Text, Button, FlatList, TextInput, StyleSheet, TouchableOpacity, 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, serverTimestamp, getDoc } from 'firebase/firestore';
 
 let app;
 let db = null;
@@ -283,6 +283,7 @@ const RockAndRollInitiative = () => {
           setCampaignId={setCampaignId}
           isConnectedToCampaign={isConnectedToCampaign}
           setIsConnectedToCampaign={setIsConnectedToCampaign}
+          db={db}
         />
       )}
       <TabBar currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} styles={styles} />
@@ -494,36 +495,62 @@ const CampaignScreen = ({
   campaignId,
   setCampaignId,
   isConnectedToCampaign,
-  setIsConnectedToCampaign
+  setIsConnectedToCampaign,
+  db
 }) => {
-  const [joinCode, setJoinCode] = useState('');
+  const [campaignCode, setCampaignCode] = useState('');
 
-  const generateCampaignCode = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let code = 'ROCK';
-    for (let i = 0; i < 4; i++) {
-      code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
-  };
-
-  const createCampaign = () => {
-    const code = generateCampaignCode();
-    setCampaignId(code);
-    setIsConnectedToCampaign(true);
-    Alert.alert('Campaign Created', `Share this code with your band:\n\n${code}\n\n(Real-time sync with Firebase coming next)`);
-  };
-
-  const joinCampaign = () => {
-    if (!joinCode.trim()) {
+  const createCampaign = async () => {
+    const code = campaignCode.trim().toUpperCase();
+    if (!code) {
       Alert.alert('Error', 'Please enter a campaign code');
       return;
     }
-    const code = joinCode.toUpperCase().trim();
+
+    if (!db) {
+      Alert.alert('Error', 'Firebase not configured');
+      return;
+    }
+
+    const campaignRef = doc(db, 'campaigns', code);
+
+    try {
+      const snapshot = await getDoc(campaignRef);
+      if (snapshot.exists()) {
+        Alert.alert('Campaign Exists', `Campaign "${code}" already exists. Join it instead or choose a different ID.`);
+        return;
+      }
+
+      await setDoc(campaignRef, {
+        players: [],
+        sessionNotes: '',
+        currentTurnIndex: 0,
+        orderMode: 'sorted',
+        createdAt: serverTimestamp(),
+        isLocked: false
+      });
+
+      setCampaignId(code);
+      setIsConnectedToCampaign(true);
+      setCampaignCode('');
+      Alert.alert('Campaign Created', `Share this code with your band:\n\n${code}`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to create campaign. Check your connection.');
+      console.error(error);
+    }
+  };
+
+  const joinCampaign = () => {
+    const code = campaignCode.trim().toUpperCase();
+    if (!code) {
+      Alert.alert('Error', 'Please enter a campaign code');
+      return;
+    }
+
     setCampaignId(code);
     setIsConnectedToCampaign(true);
-    Alert.alert('Joined Campaign', `Connected to ${code}\n\n(Real-time sync with Firebase coming next)`);
-    setJoinCode('');
+    setCampaignCode('');
+    Alert.alert('Joined Campaign', `Connected to ${code}\n\n(Real-time sync with Firebase is now active)`);
   };
 
   const leaveCampaign = () => {
@@ -538,27 +565,26 @@ const CampaignScreen = ({
       
       {isConnectedToCampaign && campaignId ? (
         <View>
-          <Text style={styles.label}>Current Campaign Code: {campaignId}</Text>
+          <Text style={styles.label}>Current Campaign: {campaignId}</Text>
           <Text style={styles.helpText}>Everyone in this campaign sees the same player list, rolls, and notes in real-time.</Text>
           <Button title="Leave Campaign" onPress={leaveCampaign} color="#990000" />
         </View>
       ) : (
         <View>
-          <Button title="Create New Campaign" onPress={createCampaign} color="#ffcc00" />
-          <Text style={styles.label}>Or join an existing campaign</Text>
+          <Text style={styles.label}>Campaign ID</Text>
           <TextInput 
-            placeholder="Enter campaign code (e.g. ROCKX7K2)" 
-            value={joinCode} 
-            onChangeText={setJoinCode} 
+            placeholder="e.g. ROCKX7K2 (4-8 characters recommended)" 
+            value={campaignCode} 
+            onChangeText={setCampaignCode} 
             style={styles.input} 
             autoCapitalize="characters"
             autoCorrect={false}
           />
-          <Button title="Join Campaign" onPress={joinCampaign} />
+          <Button title="Create New Campaign" onPress={createCampaign} color="#ffcc00" />
+          <Button title="Join Existing Campaign" onPress={joinCampaign} />
+          <Text style={styles.helpText}>Note: If the campaign is locked with a password in the future, you will be prompted for it when joining.</Text>
         </View>
       )}
-      
-      <Text style={styles.helpText}>Note: This is a simulation for now. The next update will connect it to Firebase for true real-time sync across devices.</Text>
     </View>
   );
 };
