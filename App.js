@@ -7,14 +7,27 @@ import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, serverTim
 
 let app;
 let db = null;
-try {
-  // firebaseConfig.js is gitignored - copy firebaseConfig.template.js to firebaseConfig.js and fill in your values
-  const config = require('./firebaseConfig').default || require('./firebaseConfig');
-  app = initializeApp(config);
-  db = getFirestore(app);
-  console.log('Firebase initialized successfully');
-} catch (e) {
-  console.log('Firebase config not found - running in local-only mode. Copy firebaseConfig.template.js to firebaseConfig.js');
+
+// Prefer Vercel environment variables (NEXT_PUBLIC_ prefix required for client-side), fall back to local firebaseConfig.js
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || (typeof require !== 'undefined' ? require('./firebaseConfig').default?.apiKey || require('./firebaseConfig').apiKey : null),
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || (typeof require !== 'undefined' ? require('./firebaseConfig').default?.authDomain || require('./firebaseConfig').authDomain : null),
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || (typeof require !== 'undefined' ? require('./firebaseConfig').default?.projectId || require('./firebaseConfig').projectId : null),
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || (typeof require !== 'undefined' ? require('./firebaseConfig').default?.storageBucket || require('./firebaseConfig').storageBucket : null),
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || (typeof require !== 'undefined' ? require('./firebaseConfig').default?.messagingSenderId || require('./firebaseConfig').messagingSenderId : null),
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || (typeof require !== 'undefined' ? require('./firebaseConfig').default?.appId || require('./firebaseConfig').appId : null),
+};
+
+if (firebaseConfig.apiKey) {
+  try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    console.log('Firebase initialized successfully');
+  } catch (e) {
+    console.error('Firebase initialization failed:', e);
+  }
+} else {
+  console.log('Firebase config not found - running in local-only mode. See README for Vercel or local setup.');
 }
 
 const diceOptions = ['d4', 'd6', 'd8', 'd10', 'd12', 'd14', 'd16', 'd20', 'd100'];
