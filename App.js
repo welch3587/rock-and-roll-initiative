@@ -581,14 +581,20 @@ const CampaignScreen = ({
     const campaignRef = doc(db, 'campaigns', code);
 
     console.log('Creating/updating campaign document...');
-    setDoc(campaignRef, {
-      players: [],
-      sessionNotes: '',
-      currentTurnIndex: 0,
-      orderMode: 'sorted',
-      createdAt: serverTimestamp(),
-      isLocked: false
-    }, { merge: true })
+
+    const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
+
+    Promise.race([
+      setDoc(campaignRef, {
+        players: [],
+        sessionNotes: '',
+        currentTurnIndex: 0,
+        orderMode: 'sorted',
+        createdAt: serverTimestamp(),
+        isLocked: false
+      }, { merge: true }),
+      timeout(10000) // 10 second timeout
+    ])
       .then(() => {
         setCampaignId(code);
         setIsConnectedToCampaign(true);
@@ -598,7 +604,9 @@ const CampaignScreen = ({
       })
       .catch((error) => {
         console.error('Error creating campaign:', error);
-        if (error.message && error.message.includes('BLOCKED_BY_CLIENT')) {
+        if (error.message === 'timeout') {
+          Alert.alert('Timeout', 'The operation took too long. Check your connection and browser settings (disable Shields/ad blockers).');
+        } else if (error.message && error.message.includes('BLOCKED_BY_CLIENT')) {
           Alert.alert('Connection Blocked', 'Your browser (Brave Shields or an ad blocker) is blocking Firebase. Disable Shields for this site and try again.');
         } else if (error.message && error.message.includes('offline')) {
           Alert.alert('Offline', 'Could not connect to Firebase. Check your internet connection and try again.');
