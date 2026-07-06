@@ -656,7 +656,7 @@ const CampaignScreen = ({
             value={campaignCode} 
             onChangeText={setCampaignCode} 
             style={styles.input} 
-            autoCapitalize="characters"
+            autoCapitalize="none"
             autoCorrect={false}
           />
           <Button 
